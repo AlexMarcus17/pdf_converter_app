@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -736,7 +736,8 @@ class PDFService {
   }
 
   static Future<bool> downloadImages(
-      List<String> imagePaths, List<String> fileNames) async {
+      List<String> imagePaths, List<String> fileNames,
+      {String format = 'jpg'}) async {
     try {
       // Request permission to access photos
       var status = await Permission.photos.status;
@@ -761,21 +762,22 @@ class PDFService {
             continue;
           }
 
-          // Read image bytes
-          List<int> imageBytes = await imageFile.readAsBytes();
-
-          // Save to gallery
-          final result = await ImageGallerySaver.saveImage(
-            Uint8List.fromList(imageBytes),
-            quality: 100,
-            name: fileNames[index],
-          );
-
-          // Check if save was successful
-          if (result['isSuccess'] != true) {
-            debugPrint('Failed to save image: $imagePath');
-            allSuccessful = false;
+          // Ensure the file name has the correct extension
+          String fileName = fileNames[index];
+          if (!fileName.toLowerCase().endsWith('.$format')) {
+            // Remove any existing extension and add the correct one
+            fileName =
+                fileName.replaceAll(RegExp(r'\.[^.]+$'), '') + '.$format';
           }
+
+          // Read image bytes
+          Uint8List imageBytes = await imageFile.readAsBytes();
+
+          // Save to gallery using gal package
+          await Gal.putImageBytes(
+            imageBytes,
+            name: fileName,
+          );
         } catch (e) {
           debugPrint('Error saving image $imagePath: $e');
           allSuccessful = false;

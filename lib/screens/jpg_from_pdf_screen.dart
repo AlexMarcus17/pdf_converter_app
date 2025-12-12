@@ -65,15 +65,20 @@ class _JpgFromPdfScreenState extends State<JpgFromPdfScreen> {
       setState(() {
         _isGenerating = false;
       });
-      _showErrorDialog('Failed to generate JPG images: $e');
+      toast('Error generating JPG images');
     }
   }
 
   Future<void> _downloadImage(String imagePath, int index) async {
     try {
-      PDFService.downloadImages(
-          [imagePath], ['${widget.originalName}_$index.jpg']);
-      toast('Image downloaded successfully!');
+      final success = await PDFService.downloadImages(
+          [imagePath], ['${widget.originalName}_$index.jpg'],
+          format: 'jpg');
+      if (success) {
+        toast('Image downloaded successfully!');
+      } else {
+        toast('Failed to download image');
+      }
     } catch (e) {
       toast('Failed to download image');
     }
@@ -82,32 +87,26 @@ class _JpgFromPdfScreenState extends State<JpgFromPdfScreen> {
   Future<void> _downloadAllImages() async {
     try {
       int index = 1;
+      List<String> imagePaths = [];
+      List<String> fileNames = [];
+
       for (var image in _generatedImages) {
-        PDFService.downloadImages(
-            [image], ['${widget.originalName}_$index.jpg']);
+        imagePaths.add(image);
+        fileNames.add('${widget.originalName}_$index.jpg');
         index++;
       }
 
-      toast('All images downloaded successfully!');
+      final success =
+          await PDFService.downloadImages(imagePaths, fileNames, format: 'jpg');
+
+      if (success) {
+        toast('All images downloaded successfully!');
+      } else {
+        toast('Failed to download some images');
+      }
     } catch (e) {
       toast('Failed to download images: $e');
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String message) {

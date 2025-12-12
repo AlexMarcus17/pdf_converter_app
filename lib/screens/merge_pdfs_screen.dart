@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import '../services/pdf_service.dart';
 
@@ -20,6 +21,8 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
   bool _isMerged = false;
   File? _mergedPdfFile;
   String? _mergedPdfName;
+  bool _isPickingFile =
+      false; // Flag to prevent multiple simultaneous file picker requests
   @override
   void initState() {
     super.initState();
@@ -31,6 +34,7 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     super.dispose();
   }
@@ -41,7 +45,13 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
   }
 
   Future<void> _pickPdf() async {
+    // Prevent multiple simultaneous file picker requests
+    if (_isPickingFile) {
+      return;
+    }
+
     try {
+      _isPickingFile = true;
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
@@ -54,7 +64,9 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
         });
       }
     } catch (e) {
-      _showErrorDialog('Failed to pick PDF file: $e');
+      toast('Error picking PDF file');
+    } finally {
+      _isPickingFile = false;
     }
   }
 
@@ -65,13 +77,14 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
   }
 
   Future<void> _mergePdfs() async {
+    FocusScope.of(context).unfocus();
     if (_selectedPdfs.length < 2) {
-      _showErrorDialog('Please select at least 2 PDF files');
+      toast('Please select at least 2 PDF files');
       return;
     }
 
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
 
@@ -92,28 +105,12 @@ class _MergePdfsScreenState extends State<MergePdfsScreen> {
       });
       _pdfService.addPdfToHistory(mergedPdf, _mergedPdfName!);
     } catch (e) {
-      _showErrorDialog('Failed to merge PDFs: $e');
+      toast('Error merging PDFs');
     } finally {
       setState(() {
         _isSaving = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String message, String filePath) {

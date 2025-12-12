@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/pdf_service.dart';
@@ -34,6 +35,7 @@ class _UrlToPdfScreenState extends State<UrlToPdfScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     super.dispose();
   }
@@ -68,7 +70,7 @@ class _UrlToPdfScreenState extends State<UrlToPdfScreen> {
 
   Future<void> _savePdf() async {
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
 
@@ -109,22 +111,6 @@ class _UrlToPdfScreenState extends State<UrlToPdfScreen> {
         _isSaving = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String filePath) {

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:overlay_support/overlay_support.dart';
 import 'package:pdfconverter/services/db_helper.dart';
 import '../services/pdf_service.dart';
 import 'images_to_pdf_screen.dart';
@@ -24,6 +25,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PDFService _pdfService = PDFService();
+  bool _isPickingFile =
+      false; // Flag to prevent multiple simultaneous file picker requests
+
   @override
   void initState() {
     super.initState();
@@ -234,7 +238,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<(String, String)?> _pickPdfFile() async {
+    // Prevent multiple simultaneous file picker requests
+    if (_isPickingFile) {
+      return null;
+    }
+
     try {
+      _isPickingFile = true;
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
@@ -245,7 +255,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return (file.path!, file.name);
       }
     } catch (e) {
-      _showErrorDialog('Failed to pick PDF file: $e');
+      toast('Error picking PDF file');
+    } finally {
+      _isPickingFile = false;
     }
     return null;
   }
@@ -264,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      _showErrorDialog('Failed to pick images: $e');
+      toast('Error picking images');
     }
   }
 
@@ -323,13 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _downloadPdfFromUrl(String url) async {
     if (url.isEmpty) {
-      _showErrorDialog('Please enter a URL');
+      toast('Please enter a URL');
       return;
     }
 
     if (!url.toLowerCase().endsWith('.pdf')) {
-      _showErrorDialog(
-          'URL must point to a PDF file (.pdf extension required)');
+      toast('URL must point to a PDF file');
       return;
     }
 
@@ -369,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       // Close loading dialog
       Navigator.pop(context);
-      _showErrorDialog('Failed to download PDF: $e');
+      toast('Error downloading PDF');
     }
   }
 
@@ -390,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      _showErrorDialog('Failed to open PDF: $e');
+      toast('Error opening PDF');
     }
   }
 
@@ -411,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      _showErrorDialog('Failed to open PDF: $e');
+      toast('Error opening PDF');
     }
   }
 
@@ -424,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     } catch (e) {
-      _showErrorDialog('Failed to open merge screen: $e');
+      toast('Error opening merge screen');
     }
   }
 
@@ -445,24 +456,8 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      _showErrorDialog('Failed to open PDF: $e');
+      toast('Error opening PDF');
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 }
 

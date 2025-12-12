@@ -263,7 +263,7 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
 
   Future<void> _signPdf() async {
     if (_selectedSignature == null) {
-      _showErrorDialog('Please select a signature first');
+      toast('Please select a signature first');
       return;
     }
 
@@ -305,29 +305,13 @@ class _SignPdfScreenState extends State<SignPdfScreen> {
       setState(() {
         _isLoading = false;
       });
-      _showErrorDialog('Failed to sign PDF: $e');
+      toast('Error signing PDF');
     }
   }
 
   String _generateFileName(String prefix, String extension) {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return '${prefix}_$timestamp.$extension';
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildResizeHandle(Alignment alignment) {

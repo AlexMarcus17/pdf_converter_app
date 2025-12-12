@@ -516,16 +516,25 @@ class _HistoryCardState extends State<_HistoryCard> {
                       .toList();
                   try {
                     int index = 1;
+                    List<String> imagePaths = [];
+                    List<String> fileNames = [];
+
                     for (var image in images) {
-                      await PDFService.downloadImages([
-                        image
-                      ], [
-                        '${widget.item.filePath.split('/').last}_$index.jpg'
-                      ]);
+                      imagePaths.add(image);
+                      fileNames.add(
+                          '${widget.item.filePath.split('/').last}_$index.jpg');
                       index++;
                     }
 
-                    toast('All images downloaded successfully!');
+                    final success = await PDFService.downloadImages(
+                        imagePaths, fileNames,
+                        format: 'jpg');
+
+                    if (success) {
+                      toast('All images downloaded successfully!');
+                    } else {
+                      toast('Failed to download some images');
+                    }
                   } catch (e) {
                     toast('Failed to download images: $e');
                   }
@@ -557,16 +566,25 @@ class _HistoryCardState extends State<_HistoryCard> {
                       .toList();
                   try {
                     int index = 1;
+                    List<String> imagePaths = [];
+                    List<String> fileNames = [];
+
                     for (var image in images) {
-                      await PDFService.downloadImages([
-                        image
-                      ], [
-                        '${widget.item.filePath.split('/').last}_$index.png'
-                      ]);
+                      imagePaths.add(image);
+                      fileNames.add(
+                          '${widget.item.filePath.split('/').last}_$index.png');
                       index++;
                     }
 
-                    toast('All images downloaded successfully!');
+                    final success = await PDFService.downloadImages(
+                        imagePaths, fileNames,
+                        format: 'png');
+
+                    if (success) {
+                      toast('All images downloaded successfully!');
+                    } else {
+                      toast('Failed to download some images');
+                    }
                   } catch (e) {
                     toast('Failed to download images: $e');
                   }

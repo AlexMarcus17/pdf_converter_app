@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:overlay_support/overlay_support.dart';
 import '../services/pdf_service.dart';
@@ -40,6 +41,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -56,7 +58,7 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
         });
       }
     } catch (e) {
-      _showErrorDialog('Failed to pick images: $e');
+      toast('Error picking images');
     }
   }
 
@@ -110,13 +112,14 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
   }
 
   Future<void> _convertToPdf() async {
+    FocusScope.of(context).unfocus();
     if (_selectedImages.isEmpty) {
-      _showErrorDialog('Please select at least one image');
+      toast('Please select at least one image');
       return;
     }
 
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
 
@@ -148,28 +151,12 @@ class _ImagesToPdfScreenState extends State<ImagesToPdfScreen> {
         );
       });
     } catch (e) {
-      _showErrorDialog('Failed to convert images to PDF: $e');
+      toast('Error converting images to PDF');
     } finally {
       setState(() {
         _isConverting = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String filePath) {

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import '../services/pdf_service.dart';
 
@@ -42,6 +43,7 @@ class _EncryptPdfScreenState extends State<EncryptPdfScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -64,13 +66,14 @@ class _EncryptPdfScreenState extends State<EncryptPdfScreen> {
   }
 
   Future<void> _encryptPdf() async {
+    FocusScope.of(context).unfocus();
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
 
     if (_passwordController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a password');
+      toast('Please enter a password');
       return;
     }
 
@@ -92,28 +95,12 @@ class _EncryptPdfScreenState extends State<EncryptPdfScreen> {
       });
       _pdfService.addPdfToHistory(encryptedPdf, _encryptedPdfName!);
     } catch (e) {
-      _showErrorDialog('Failed to encrypt PDF: $e');
+      toast('Error encrypting PDF');
     } finally {
       setState(() {
         _isSaving = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String message, String filePath) {

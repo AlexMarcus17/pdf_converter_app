@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
+import 'package:overlay_support/overlay_support.dart';
+import 'package:flutter/services.dart';
 import 'package:signature/signature.dart';
 
 class SignatureCreatorScreen extends StatefulWidget {
@@ -26,19 +28,21 @@ class _SignatureCreatorScreenState extends State<SignatureCreatorScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _controller.dispose();
     _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _saveSignature() async {
+    FocusScope.of(context).unfocus();
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a name for your signature');
+      toast('Please enter a name for your signature');
       return;
     }
 
     if (_controller.isEmpty) {
-      _showErrorDialog('Please draw your signature');
+      toast('Please draw your signature');
       return;
     }
 
@@ -47,24 +51,8 @@ class _SignatureCreatorScreenState extends State<SignatureCreatorScreen> {
       widget.onSignatureSaved(_nameController.text.trim(), signatureBytes);
       Navigator.pop(context);
     } else {
-      _showErrorDialog('Failed to save signature');
+      toast('Error saving signature');
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import '../services/pdf_service.dart';
 
@@ -36,6 +37,8 @@ class _TextToPdfScreenState extends State<TextToPdfScreen> {
 
   @override
   void dispose() {
+    // Hide keyboard when exiting the page
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _textController.dispose();
     _nameController.dispose();
     _scrollController.dispose();
@@ -86,13 +89,16 @@ class _TextToPdfScreenState extends State<TextToPdfScreen> {
   }
 
   Future<void> _generatePdf() async {
+    // Hide keyboard when Generate PDF is pressed
+    FocusScope.of(context).unfocus();
+
     if (_textController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter some text');
+      toast('Please enter some text');
       return;
     }
 
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
 
@@ -124,28 +130,12 @@ class _TextToPdfScreenState extends State<TextToPdfScreen> {
         );
       });
     } catch (e) {
-      _showErrorDialog('Failed to generate PDF: $e');
+      toast('Error generating PDF');
     } finally {
       setState(() {
         _isGenerating = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showSuccessDialog(String filePath) {

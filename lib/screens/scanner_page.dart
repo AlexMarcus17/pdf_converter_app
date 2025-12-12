@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -171,6 +172,7 @@ class _ScannerConvertScreenState extends State<ScannerConvertScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -286,12 +288,13 @@ class _ScannerConvertScreenState extends State<ScannerConvertScreen> {
   }
 
   Future<void> _convertToPdf() async {
+    FocusScope.of(context).unfocus();
     if (_scannedImages.isEmpty) {
-      _showErrorDialog('Please scan at least one image');
+      toast('Please scan at least one image');
       return;
     }
     if (_nameController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter a file name');
+      toast('Please enter a file name');
       return;
     }
     setState(() {
@@ -318,28 +321,12 @@ class _ScannerConvertScreenState extends State<ScannerConvertScreen> {
         );
       });
     } catch (e) {
-      _showErrorDialog('Failed to convert images to PDF: $e');
+      toast('Error converting images to PDF');
     } finally {
       setState(() {
         _isConverting = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

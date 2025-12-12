@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:overlay_support/overlay_support.dart';
 import '../services/pdf_service.dart';
 
@@ -39,6 +40,7 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _pagesController.dispose();
     super.dispose();
   }
@@ -98,21 +100,22 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
   }
 
   Future<void> _splitPdf() async {
+    FocusScope.of(context).unfocus();
     if (_pagesController.text.trim().isEmpty) {
-      _showErrorDialog('Please enter page numbers');
+      toast('Please enter page numbers');
       return;
     }
 
     final ranges = _parsePageRanges(_pagesController.text);
     if (ranges.isEmpty) {
-      _showErrorDialog('Invalid page numbers.');
+      toast('Invalid page numbers');
       return;
     }
 
     // Validate all page numbers in all ranges
     for (final range in ranges) {
       if (!_validatePageNumbers(range)) {
-        _showErrorDialog(
+        toast(
             'Invalid page numbers. Please enter numbers between 1 and $_pageCount');
         return;
       }
@@ -144,28 +147,12 @@ class _SplitPdfScreenState extends State<SplitPdfScreen> {
         index++;
       }
     } catch (e) {
-      _showErrorDialog('Failed to split PDF: $e');
+      toast('Error splitting PDF');
     } finally {
       setState(() {
         _isSaving = false;
       });
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

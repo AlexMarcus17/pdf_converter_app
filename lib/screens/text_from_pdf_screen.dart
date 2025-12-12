@@ -42,6 +42,7 @@ class _TextFromPdfScreenState extends State<TextFromPdfScreen> {
 
   @override
   void dispose() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
     _nameController.dispose();
     super.dispose();
   }
@@ -81,7 +82,7 @@ class _TextFromPdfScreenState extends State<TextFromPdfScreen> {
       setState(() {
         _isExtracting = false;
       });
-      _showErrorDialog('Failed to extract text: $e');
+      toast('Error extracting text');
     }
   }
 
@@ -96,24 +97,8 @@ class _TextFromPdfScreenState extends State<TextFromPdfScreen> {
       });
       _pdfService.addPlainTextToHistory(text, fileName);
     } catch (e) {
-      _showErrorDialog('Failed to extract text');
+      toast('Error extracting text');
     }
-  }
-
-  void _showErrorDialog(String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showFormatPicker() {
